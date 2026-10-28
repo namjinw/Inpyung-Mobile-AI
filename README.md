@@ -74,7 +74,7 @@ app/
 └─ ui/             index.html, renderer.js, style.css
 ```
 
-`src/`, `vite.config.ts`, React 관련 파일은 초기 Vite 템플릿에서 남은 것으로 앱에서는 쓰지 않아요.
+`app/assets/logo.png`는 로고 원본이고, `logo-circle.png`와 `icon.ico`는 이 원본으로 만든 원형 로고와 앱 아이콘이에요.
 
 ## 아직 확인하지 못한 것
 

@@ -5,10 +5,7 @@
   "type": "module",
   "main": "app/main.cjs",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview",
     "app:dev": "powershell -Command \"$env:DEV=1; electron .\"",
     "app": "electron ."
   },
