@@ -77,7 +77,7 @@ async function runInstall() {
     if (settings.isPlaceholder(cfg)) {
       step(4, '클로드 환경 설정 가져오기', 'skipped', 100, '설정 저장소가 아직 정해지지 않아서 건너뛰었어요. (app/config.json에서 설정)')
     } else {
-      step(4, '클로드 환경 설정 가져오기', 'running', 15, '조직 저장소에서 설정을 받는 중… GitHub 로그인 창이 뜨면 로그인해 주세요.')
+      step(4, '클로드 환경 설정 가져오기', 'running', 15, '설정 저장소에서 설정을 받는 중… GitHub 로그인 창이 뜨면 로그인해 주세요.')
       const plan = await settings.plan(cfg, g.gitExe)
       step(4, '클로드 환경 설정 가져오기', 'running', 40, '적용할 파일을 확인해 주세요.')
       const ok = await ask(plan)

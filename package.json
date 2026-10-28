@@ -1,7 +1,7 @@
 {
   "name": "wordskill_app",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "main": "app/main.cjs",
   "scripts": {
@@ -9,18 +9,8 @@
     "app:dev": "powershell -Command \"$env:DEV=1; electron .\"",
     "app": "electron ."
   },
-  "dependencies": {
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1"
-  },
   "devDependencies": {
-    "@types/node": "^24.19.2",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
     "electron": "^45.0.0",
-    "oxlint": "^1.88.0",
-    "typescript": "~6.0.3",
-    "vite": "^8.3.4"
+    "oxlint": "^1.88.0"
   }
 }

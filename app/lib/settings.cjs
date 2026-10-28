@@ -1,4 +1,4 @@
-// [F5][F11] 조직 저장소(비공개 가능)의 릴리스 태그를 git clone으로 받아 CLAUDE_CONFIG_DIR에 적용한다.
+// [F5][F11] 설정 저장소(비공개 가능)의 릴리스 태그를 git clone으로 받아 CLAUDE_CONFIG_DIR에 적용한다.
 // GitHub 로그인은 Git(자격 증명 관리자)이 처리하고, 이 앱은 토큰을 저장하거나 입력받지 않는다.
 const fs = require('fs')
 const path = require('path')
@@ -26,7 +26,7 @@ const base = (cfg) => path.join(CLONE, cfg.settingsDir || '')
 function explain(stderr, cfg) {
   if (/Remote branch .* not found|not found in upstream/i.test(stderr)) return `태그(${cfg.settingsTag})를 저장소에서 찾지 못했어요. 릴리스 태그 이름이 맞는지 확인해 주세요.`
   if (/Authentication failed|could not read Username|terminal prompts disabled|Permission denied|403|Repository not found|not found/i.test(stderr))
-    return `설정 저장소(${cfg.settingsRepo})에 접근하지 못했어요. 조직에 초대됐는지, GitHub 로그인을 마쳤는지, 저장소 이름이 맞는지 확인해 주세요.`
+    return `설정 저장소(${cfg.settingsRepo})에 접근하지 못했어요. 저장소 접근 권한이 있는 계정으로 GitHub 로그인을 마쳤는지, 저장소 이름이 맞는지 확인해 주세요.`
   return `설정 저장소를 받지 못했어요. (${stderr.trim().split(/\r?\n/)[0] || '알 수 없는 오류'})`
 }
 
