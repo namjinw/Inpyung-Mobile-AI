@@ -50,12 +50,29 @@ npm install
 npm run app
 ```
 
+## .env로 태그 지정
+
+프로젝트 맨 위(배포한 exe는 exe 옆)의 `.env`에 아래 값을 두면 `config.json`을 고치지 않아도 돼요. `.env.example`을 복사해서 쓰고, `.env`는 git에 올라가지 않아요. 비밀 값은 넣지 않아요.
+
+| 키 | 설명 |
+|---|---|
+| `SETTINGS_REPO` | 설정 저장소 (`소유자/저장소`) |
+| `SETTINGS_TAG` | 받을 태그. `latest`면 저장소의 가장 높은 `vX.Y.Z` 태그를 자동으로 받아요. |
+
+## exe 만들기
+
+```bash
+npm run pack
+```
+
+`release/` 폴더에 `WordSkillApp.exe`가 만들어져요. `.env`는 포함되지 않으니 exe 옆에 `.env`를 두세요. `release/`와 exe는 git에 올라가지 않아요.
+
 ## 설정 (`app/config.json`)
 
 | 키 | 설명 |
 |---|---|
 | `settingsRepo` | 설정 저장소 (`소유자/저장소`) |
-| `settingsTag` | 받을 태그 (예: `v0.1.0`). 설정을 바꾸면 새 태그를 만들고 이 값을 올려야 해요. |
+| `settingsTag` | 받을 태그 (예: `v0.1.0`). 보통은 아래 `.env`의 `SETTINGS_TAG`가 이 값을 덮어써요. |
 | `settingsDir` | 저장소 안의 설정 폴더 (`.claude`) |
 | `settingsFiles` | 적용을 허용하는 항목 (`CLAUDE.md`, `settings.json`, `skills`, `commands`, `agents`) |
 | `gitTag`, `gitFile`, `gitSha256` | 휴대용 Git 버전과 해시 |

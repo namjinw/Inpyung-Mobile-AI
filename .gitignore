@@ -33,3 +33,9 @@ dist-ssr
 CLAUDE.local.md
 *.part
 *.7z
+
+# 빌드 결과물 (exe, 폴더)
+release/
+out/
+*.exe
+*.zip

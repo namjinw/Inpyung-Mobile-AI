@@ -37,6 +37,22 @@ const git = (gitExe, args, cfg) =>
     ),
   )
 
+// SETTINGS_TAG=latest 이면 저장소의 vX.Y.Z 태그 중 가장 높은 버전을 쓴다.
+async function latestTag(cfg, gitExe) {
+  const out = await git(gitExe, ['ls-remote', '--tags', '--refs', `https://github.com/${cfg.settingsRepo}.git`], cfg)
+  const tags = out
+    .split(/\r?\n/)
+    .map((l) => l.split('refs/tags/')[1])
+    .filter((t) => /^v?\d+\.\d+\.\d+$/.test(t || ''))
+    .sort((a, b) => {
+      const [x, y] = [a, b].map((t) => t.replace(/^v/, '').split('.').map(Number))
+      return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]
+    })
+  if (!tags.length) throw new Error('설정 저장소에 vX.Y.Z 형식의 태그가 없어요.')
+  log(`최신 설정 태그: ${tags[tags.length - 1]}`)
+  return tags[tags.length - 1]
+}
+
 // 적용할 항목(허용 목록에 있는 최상위 파일/폴더)만 남긴다.
 const allowed = (cfg, p) => cfg.settingsFiles.includes(p.split('/')[0])
 
@@ -54,6 +70,7 @@ function listFiles(root, rel = '') {
 // 저장소를 임시 폴더(전용 폴더 안)에 받고, 적용하기 전에 파일 목록과 미리보기를 돌려준다.
 async function plan(cfg, gitExe) {
   validate(cfg)
+  if (cfg.settingsTag === 'latest') cfg = { ...cfg, settingsTag: await latestTag(cfg, gitExe) }
   forceRemove(CLONE)
   fs.mkdirSync(dirs.tmp, { recursive: true })
   log(`설정 저장소를 받는 중: ${cfg.settingsRepo} (${cfg.settingsTag})`)

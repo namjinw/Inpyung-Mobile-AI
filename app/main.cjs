@@ -16,7 +16,7 @@ const install = require('./lib/install.cjs')
 const settings = require('./lib/settings.cjs')
 const session = require('./lib/session.cjs')
 
-const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'))
+const cfg = require('./lib/envfile.cjs').load(JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8')))
 const SMOKE = process.argv.includes('--smoke') // 화면이 뜨는지만 확인하고 끝내는 테스트용
 
 let win = null
