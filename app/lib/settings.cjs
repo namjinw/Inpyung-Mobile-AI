@@ -83,4 +83,7 @@ function apply(cfg, onP) {
   return { applied: n }
 }
 
-module.exports = { isPlaceholder, plan, apply }
+// 적용하지 않고 중단할 때 받아 둔 저장소를 지운다.
+const cleanup = () => forceRemove(CLONE)
+
+module.exports = { isPlaceholder, plan, apply, cleanup }

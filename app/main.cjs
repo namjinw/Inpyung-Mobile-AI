@@ -80,13 +80,14 @@ async function runInstall() {
       step(4, '클로드 환경 설정 가져오기', 'running', 15, '설정 저장소에서 설정을 받는 중… GitHub 로그인 창이 뜨면 로그인해 주세요.')
       const plan = await settings.plan(cfg, g.gitExe)
       step(4, '클로드 환경 설정 가져오기', 'running', 40, '적용할 파일을 확인해 주세요.')
-      const ok = await ask(plan)
-      if (!ok) step(4, '클로드 환경 설정 가져오기', 'skipped', 100, '설정 적용을 건너뛰었어요.')
-      else {
-        const r = await settings.apply(cfg, (pct, msg) => step(4, '클로드 환경 설정 가져오기', 'running', pct, msg))
-        applied = r.applied
-        step(4, '클로드 환경 설정 가져오기', 'done', 100, `${applied}개 항목을 적용했어요.`)
+      // 설정(CLAUDE.md, 권한 제한, /report)이 빠진 채로 실행되지 않도록, 적용하지 않으면 설치를 마치지 않는다.
+      if (!(await ask(plan))) {
+        settings.cleanup()
+        throw new Error('설정을 적용하지 않으면 설치를 마칠 수 없어서 중단했어요. 다시 [설치]를 눌러 주세요.')
       }
+      const r = await settings.apply(cfg, (pct, msg) => step(4, '클로드 환경 설정 가져오기', 'running', pct, msg))
+      applied = r.applied
+      step(4, '클로드 환경 설정 가져오기', 'done', 100, `${applied}개 항목을 적용했어요.`)
     }
 
     session.writeState({ ready: true, claudeVersion: cl.version, bashPath: g.bashPath })
