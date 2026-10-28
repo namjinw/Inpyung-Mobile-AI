@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'" />
+    <title>Claude Code 대회 준비 도구</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- 사이드바: 메뉴로 화면을 바꾼다. ☰ 버튼으로 열고 닫는다. -->
+      <aside id="side">
+        <div class="brand"><img src="../assets/logo-circle.png" alt="" /><div>Claude Code<br /><span>대회 준비 도구</span></div></div>
+        <nav>
+          <button data-page="install" class="active">설치</button>
+          <button data-page="guide">안내</button>
+          <button data-page="log">로그</button>
+        </nav>
+      </aside>
+
+      <section id="content">
+        <header>
+          <button id="toggle" class="icon" title="사이드바 열기/닫기">☰</button>
+          <h1 id="title">설치</h1>
+          <span id="phaseTag" class="tag">대기</span>
+        </header>
+
+        <main>
+          <!-- 설치: 환경 점검 + 버튼 + 단계 진행 (한 화면에 모두 보임) -->
+          <div class="page" id="page-install">
+            <section class="card">
+              <h2>환경 점검</h2>
+              <ul id="env"><li class="muted">점검하는 중…</li></ul>
+            </section>
+
+            <div class="actions">
+              <button id="main" data-phase="idle">설치</button>
+              <button id="reset" class="ghost">리셋 (전용 폴더 삭제)</button>
+            </div>
+
+            <section class="card grow">
+              <h2>진행 상황</h2>
+              <ol id="steps">
+                <li class="step" data-i="1"><div class="row"><span class="name">1/4 환경 점검</span><span class="badge">대기</span></div><div class="bar"><i></i></div><div class="msg"></div></li>
+                <li class="step" data-i="2"><div class="row"><span class="name">2/4 클로드 설치</span><span class="badge">대기</span></div><div class="bar"><i></i></div><div class="msg"></div></li>
+                <li class="step" data-i="3"><div class="row"><span class="name">3/4 Git 준비</span><span class="badge">대기</span></div><div class="bar"><i></i></div><div class="msg"></div></li>
+                <li class="step" data-i="4"><div class="row"><span class="name">4/4 클로드 환경 설정 가져오기</span><span class="badge">대기</span></div><div class="bar"><i></i></div><div class="msg"></div></li>
+              </ol>
+            </section>
+          </div>
+
+          <!-- 안내: [F6] 로그인 안내와 전송/삭제 안내 -->
+          <div class="page" id="page-guide" hidden>
+            <div class="cards">
+              <section class="card">
+                <h2>로그인</h2>
+                <p>실행하면 새 창에서 Claude Code가 열려요. 로그인 안내가 나오면 <b>본인 Claude 계정</b>으로 로그인하세요. 유료 플랜 등 사용 조건은 공식 문서에서 확인해 주세요.</p>
+                <p>공용 PC라면 로그인 주소를 <b>시크릿 창</b>에서 열어 주세요. 브라우저에 남은 claude.ai 로그인은 이 앱이 지울 수 없어요.</p>
+              </section>
+              <section class="card">
+                <h2>설정 저장소 (GitHub)</h2>
+                <p>환경 설정 저장소가 비공개라서 받을 때 <b>GitHub 로그인 창</b>이 한 번 뜰 수 있어요. 조직에 초대된 계정으로 로그인하세요.</p>
+                <p>이 로그인 정보는 Git이 Windows 자격 증명 관리자에 저장해서 전용 폴더를 지워도 남아요. 공용 PC라면 사용 후 자격 증명 관리자에서 github.com 항목을 지워 주세요.</p>
+              </section>
+              <section class="card">
+                <h2>/report 명령</h2>
+                <p>환경 설정에 <b>/report</b> 명령이 들어 있어요. 실행하면 작업한 문제와 진행 상황의 <b>요약이 서버로 전송</b>돼요.</p>
+                <p>코드 원문과 키는 보내지 않고, 전송 전에 내용을 먼저 보여주고 확인을 받아요. 실행하지 않으면 아무것도 전송되지 않아요.</p>
+              </section>
+              <section class="card">
+                <h2>삭제와 작업 폴더</h2>
+                <p>앱을 닫거나 [리셋]을 누르면 Claude 종료, 로그인 정보 삭제, 전용 폴더 삭제가 한 번에 진행돼요.</p>
+                <p>작업 폴더(<span id="work"></span>)는 지우지 않아요.</p>
+              </section>
+            </div>
+          </div>
+
+          <!-- 로그: 가장 최근 줄만 보여준다 (스크롤 없음) -->
+          <div class="page" id="page-log" hidden>
+            <section class="card grow logcard">
+              <h2>로그 <span class="muted">(최근 기록만 표시돼요)</span></h2>
+              <pre id="log"></pre>
+            </section>
+          </div>
+        </main>
+      </section>
+    </div>
+
+    <!-- [F5][F11] 설정 적용 전 확인 창 -->
+    <div id="modal" hidden>
+      <div class="dialog">
+        <h2>이 설정을 적용할까요?</h2>
+        <p id="modalRepo" class="muted"></p>
+        <p id="modalWarn" class="warn" hidden></p>
+        <div class="cols">
+          <div>
+            <h3>적용될 파일</h3>
+            <ul id="modalFiles"></ul>
+            <p id="modalIgnored" class="muted"></p>
+          </div>
+          <div>
+            <h3>CLAUDE.md 미리보기</h3>
+            <pre id="modalPreview"></pre>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="ok">적용</button>
+          <button id="skip" class="ghost">건너뛰기</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
