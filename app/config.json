@@ -1,6 +1,6 @@
 {
   "settingsRepo": "namjinw/Inpyung-Mobile-AI-Setting",
-  "settingsTag": "v0.1.2",
+  "settingsTag": "v0.2.0",
   "settingsDir": ".claude",
   "settingsFiles": ["CLAUDE.md", "settings.json", "skills", "commands", "agents"],
   "gitTag": "v2.56.0.windows.4",
