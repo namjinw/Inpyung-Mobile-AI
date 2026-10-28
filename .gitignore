@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 비밀 값
+.env
+.env.*
+!.env.example
+
+# Claude Code 개인 설정, 임시 파일
+.claude/settings.local.json
+CLAUDE.local.md
+*.part
+*.7z
