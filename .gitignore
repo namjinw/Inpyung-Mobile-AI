@@ -39,3 +39,4 @@ release/
 out/
 *.exe
 *.zip
+release-setup/

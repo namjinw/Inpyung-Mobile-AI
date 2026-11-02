@@ -8,10 +8,43 @@
     "lint": "oxlint",
     "app:dev": "powershell -Command \"$env:DEV=1; electron .\"",
     "app": "electron .",
-    "pack": "npx --yes @electron/packager . WordSkillApp --platform=win32 --arch=x64 --out=release --overwrite --prune=true --ignore=\"^/(release|[.]env|[.]claude|style_draft|src)\""
+    "pack": "npx --yes @electron/packager . WordSkillApp --platform=win32 --arch=x64 --out=release --overwrite --prune=true --ignore=\"^/(release|[.]env|[.]claude|style_draft|src)\"",
+    "dist": "electron-builder --win nsis --x64"
   },
   "devDependencies": {
     "electron": "^45.0.0",
+    "electron-builder": "^26.18.0",
     "oxlint": "^1.88.0"
+  },
+  "build": {
+    "appId": "kr.wordskill.contest",
+    "productName": "WordSkill Claude Contest",
+    "directories": {
+      "output": "release-setup"
+    },
+    "files": [
+      "app/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "app/assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "WordSkill-Setup.exe"
+    }
   }
 }
