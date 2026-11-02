@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   info: () => ipcRenderer.invoke('info'),
   check: () => ipcRenderer.invoke('check'),
   install: () => ipcRenderer.invoke('install'),
+  login: () => ipcRenderer.invoke('login'),
   launch: () => ipcRenderer.invoke('launch'),
   reset: () => ipcRenderer.invoke('reset'),
   settingsReply: (ok) => ipcRenderer.send('settings-reply', ok),

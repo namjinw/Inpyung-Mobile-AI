@@ -22,8 +22,10 @@ const PHASES = {
   idle: { text: '설치', tag: '대기', disabled: false },
   failed: { text: '다시 시도', tag: '실패', disabled: false },
   installing: { text: '설치 중…', tag: '설치 중', disabled: true },
-  ready: { text: '실행', tag: '설치 완료', disabled: false },
-  running: { text: '실행 중 (Claude Code 창을 확인하세요)', tag: '실행 중', disabled: true },
+  login: { text: '로그인', tag: '로그인 필요', disabled: false },
+  loggingin: { text: '로그인 중… (브라우저에서 진행하세요)', tag: '로그인 중', disabled: true },
+  ready: { text: '실행', tag: '준비 완료', disabled: false },
+  running: { text: '새 Claude Code 창 열기', tag: '실행 중', disabled: false },
 }
 let phase = 'idle'
 function setPhase(p) {
@@ -70,7 +72,12 @@ function resetSteps() {
 
 // ⑤ 버튼 동작
 mainBtn.addEventListener('click', async () => {
-  if (phase === 'ready') {
+  if (phase === 'login') {
+    const r = await window.api.login()
+    if (!r.ok) alert(r.error)
+    return
+  }
+  if (phase === 'ready' || phase === 'running') {
     const l = await window.api.launch()
     if (!l.ok) alert(l.error)
     return
@@ -139,6 +146,6 @@ $('skip').addEventListener('click', () => reply(false))
 ;(async () => {
   const info = await window.api.info()
   $('work').textContent = info.work
-  setPhase(info.ready ? 'ready' : 'idle')
+  setPhase(info.ready ? (info.loggedIn ? 'ready' : 'login') : 'idle')
   showCheck()
 })()

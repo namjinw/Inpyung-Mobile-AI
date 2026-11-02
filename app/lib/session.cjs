@@ -1,6 +1,6 @@
 // [F7][F8] 세션 상태, 실행, 종료 시 삭제, 시작 시 잔여물 정리
 const fs = require('fs')
-const { spawn } = require('child_process')
+const { spawn, execFile } = require('child_process')
 const { dirs, safeRemoveSession, prepareSession } = require('./paths.cjs')
 const { sessionPids, killSessionProcs } = require('./procs.cjs')
 const { buildEnv } = require('./env.cjs')
@@ -46,6 +46,36 @@ function launch(bashPath) {
   log(`Claude Code를 실행했어요. 작업 폴더: ${dirs.work}`)
 }
 
+// 로그인 여부: claude가 직접 확인한다. (이 앱은 토큰을 읽거나 저장하지 않는다.)
+const isLoggedIn = (bashPath) =>
+  new Promise((resolve) =>
+    execFile(dirs.claudeExe, ['auth', 'status'], { env: buildEnv(bashPath), windowsHide: true, timeout: 20000 }, (e, out) => {
+      if (e) return resolve(false)
+      try {
+        resolve(JSON.parse(String(out)).loggedIn !== false)
+      } catch {
+        resolve(true) // 종료 코드가 0이면 로그인된 상태
+      }
+    }),
+  )
+
+// 로그인 창(claude auth login)을 열고, 로그인이 끝날 때까지 기다린다. 로그인 정보는 전용 폴더(CLAUDE_CONFIG_DIR)에 claude가 저장한다.
+async function login(bashPath) {
+  fs.mkdirSync(dirs.work, { recursive: true })
+  const cmd = `start "Claude 로그인" /D "${dirs.work}" "${dirs.claudeExe}" auth login`
+  const child = spawn('cmd.exe', ['/d', '/s', '/c', `"${cmd}"`], { env: buildEnv(bashPath), detached: true, stdio: 'ignore', windowsHide: true, windowsVerbatimArguments: true })
+  child.unref()
+  log('로그인 창을 열었어요. 브라우저에서 로그인을 마쳐 주세요.')
+  const until = Date.now() + 5 * 60 * 1000
+  const began = Date.now()
+  while (Date.now() < until) {
+    await new Promise((r) => setTimeout(r, 3000))
+    if (await isLoggedIn(bashPath)) return { ok: true }
+    if (Date.now() - began > 15000 && !(await sessionPids()).length) return { ok: false, error: '로그인 창이 닫혔어요. 로그인이 끝나지 않았어요. 다시 [로그인]을 눌러 주세요.' }
+  }
+  return { ok: false, error: '로그인 시간이 지났어요. 다시 [로그인]을 눌러 주세요.' }
+}
+
 const isRunning = async () => (await sessionPids()).length > 0
 
-module.exports = { prepareSession, readState, writeState, isReady, startupCleanup, reset, launch, isRunning }
+module.exports = { prepareSession, readState, writeState, isReady, startupCleanup, reset, launch, isRunning, isLoggedIn, login }

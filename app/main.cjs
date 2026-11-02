@@ -91,8 +91,9 @@ async function runInstall() {
     }
 
     session.writeState({ ready: true, claudeVersion: cl.version, bashPath: g.bashPath })
-    send('state', { phase: 'ready' })
-    log('설치가 끝났어요. [실행] 버튼을 눌러 Claude Code를 시작하세요.')
+    const loggedIn = await session.isLoggedIn(g.bashPath)
+    send('state', { phase: loggedIn ? 'ready' : 'login' })
+    log(loggedIn ? '설치가 끝났어요. [실행] 버튼을 눌러 Claude Code를 시작하세요.' : '설치가 끝났어요. [로그인]을 눌러 Claude 계정으로 로그인해 주세요.')
     return { ok: true }
   } catch (e) {
     log(`오류: ${e.message}`)
@@ -114,11 +115,23 @@ function startPolling() {
   }, 3000)
 }
 
-ipcMain.handle('info', () => ({ ready: session.isReady(), placeholder: settings.isPlaceholder(cfg), repo: cfg.settingsRepo, tag: cfg.settingsTag, work: paths.dirs.work }))
+ipcMain.handle('info', async () => ({ ready: session.isReady(), loggedIn: session.isReady() && (await session.isLoggedIn(session.readState().bashPath)), placeholder: settings.isPlaceholder(cfg), repo: cfg.settingsRepo, tag: cfg.settingsTag, work: paths.dirs.work }))
 ipcMain.handle('check', () => check.run(cfg))
 ipcMain.handle('install', () => runInstall())
+ipcMain.handle('login', async () => {
+  if (!session.isReady()) return { ok: false, error: '아직 설치가 끝나지 않았어요. 먼저 [설치]를 눌러 주세요.' }
+  send('state', { phase: 'loggingin' })
+  const r = await session.login(session.readState().bashPath)
+  send('state', { phase: r.ok ? 'ready' : 'login' })
+  if (r.ok) log('로그인했어요. 이제 [실행]으로 Claude Code를 여러 개 열 수 있어요. 로그인은 모든 창에서 함께 쓰여요.')
+  return r
+})
 ipcMain.handle('launch', async () => {
   if (!session.isReady()) return { ok: false, error: '아직 설치가 끝나지 않았어요. 먼저 [설치]를 눌러 주세요.' }
+  if (!(await session.isLoggedIn(session.readState().bashPath))) {
+    send('state', { phase: 'login' })
+    return { ok: false, error: '먼저 [로그인]을 해 주세요.' }
+  }
   session.launch(session.readState().bashPath)
   send('state', { phase: 'running' })
   startPolling()

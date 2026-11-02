@@ -55,7 +55,7 @@ button { font: inherit; border: 0; border-radius: 10px; padding: 12px 22px; curs
 button:hover:not(:disabled) { filter: brightness(1.1); }
 button:disabled { opacity: .5; cursor: default; }
 #main { flex: 1; font-size: 16px; padding: 14px; }
-#main[data-phase='ready'] { background: var(--ok); color: #0c1a13; }
+#main[data-phase='ready'], #main[data-phase='running'] { background: var(--ok); color: #0c1a13; }
 button.ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); font-weight: 400; }
 
 /* 진행 상황: 남은 높이를 4칸이 나눠 가진다. */
