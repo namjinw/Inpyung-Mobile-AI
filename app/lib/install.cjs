@@ -1,9 +1,10 @@
-// [F3][F4][F10] Claude Code와 Git을 전용 폴더에만 설치한다.
+// [F3][F4][F10] Claude Code와 Git 설치. 이미 설치된 claude가 있으면 그대로 쓰고, 없을 때만 앱 폴더(data)에 받는다.
 // 공식 설치 스크립트의 마지막 단계(claude install)는 홈 폴더를 건드리므로 쓰지 않고, 바이너리만 받아서 직접 배치한다.
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
 const { execFile } = require('child_process')
-const { dirs } = require('./paths.cjs')
+const { dirs, useClaude } = require('./paths.cjs')
 const { fetchText, sha256File, download } = require('./net.cjs')
 const { buildEnv } = require('./env.cjs')
 const { log } = require('./log.cjs')
@@ -25,8 +26,26 @@ async function resolveClaude() {
 const run = (file, args, env, ms = 20000) =>
   new Promise((resolve, reject) => execFile(file, args, { env, timeout: ms, windowsHide: true }, (e, out) => (e ? reject(e) : resolve(String(out).trim()))))
 
+// PC에 이미 설치된 claude.exe 찾기 (PATH, 공식 설치 위치). .cmd 같은 래퍼는 쓰지 않는다.
+async function findExistingClaude() {
+  const found = await new Promise((resolve) => execFile('where.exe', ['claude'], { windowsHide: true, timeout: 8000 }, (_e, out) => resolve(String(out || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean))))
+  const cands = [...found, path.join(os.homedir(), '.local', 'bin', 'claude.exe')].filter((p) => /\.exe$/i.test(p) && fs.existsSync(p))
+  for (const p of cands) {
+    const version = await run(p, ['--version'], buildEnv(null)).catch(() => null)
+    if (version) return { path: p, version }
+  }
+  return null
+}
+
 // onP(퍼센트, 메시지)
 async function claude(cfg, onP) {
+  onP(5, '이미 설치된 Claude Code가 있는지 찾는 중…')
+  const existing = await findExistingClaude()
+  if (existing) {
+    useClaude(existing.path)
+    log(`이미 설치된 Claude Code를 그대로 사용해요: ${existing.path} (${existing.version})`)
+    return { version: `${existing.version} (기존 설치 사용)`, reused: true }
+  }
   const r = await resolveClaude()
   log(`Claude Code ${r.ver} (${r.platform}) 설치를 시작해요.`)
   const cached = path.join(dirs.CACHE, `claude-${r.ver}-${r.platform}.exe`)
@@ -41,7 +60,9 @@ async function claude(cfg, onP) {
   else await download(r.url, cached, { sha256: r.sum, onProgress: (g, t) => onP(t ? Math.round((g / t) * 90) : 0, `${mb(g)} / ${t ? mb(t) : '?'} MB 내려받는 중…`) })
 
   fs.mkdirSync(dirs.bin, { recursive: true })
-  fs.copyFileSync(cached, dirs.claudeExe)
+  const target = path.join(dirs.bin, 'claude.exe')
+  fs.copyFileSync(cached, target)
+  useClaude(target)
   if (!cfg.useCache) fs.rmSync(cached, { force: true })
 
   onP(95, '설치된 파일을 확인하는 중…')

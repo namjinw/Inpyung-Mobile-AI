@@ -1,6 +1,5 @@
-// 전용 폴더 안의 프로그램만 찾아서 종료한다. (이름으로 죽이면 내 실제 claude까지 죽으므로 경로로만 판단)
+// 이 앱이 쓰는 claude.exe가 실행 중인지 확인한다. (이름이 아니라 전체 경로로만 판단하고, 종료시키지는 않는다.)
 const { execFile } = require('child_process')
-const path = require('path')
 const { dirs } = require('./paths.cjs')
 
 const ps = (script, env) =>
@@ -10,18 +9,11 @@ const ps = (script, env) =>
     ),
   )
 
-// ExecutablePath가 SESSION 폴더 아래인 프로세스
-const FIND = `Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($env:SESS_DIR, [StringComparison]::OrdinalIgnoreCase) }`
-const env = () => ({ SESS_DIR: dirs.SESSION + path.sep })
+const FIND = `Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath -ieq $env:CLAUDE_EXE }`
 
 async function sessionPids() {
-  const out = await ps(`${FIND} | ForEach-Object { $_.ProcessId }`, env())
+  const out = await ps(`${FIND} | ForEach-Object { $_.ProcessId }`, { CLAUDE_EXE: dirs.claudeExe })
   return out.split(/\s+/).filter(Boolean).map(Number)
 }
 
-async function killSessionProcs() {
-  const out = await ps(`${FIND} | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }`, env())
-  return out.split(/\s+/).filter(Boolean).length
-}
-
-module.exports = { sessionPids, killSessionProcs }
+module.exports = { sessionPids }

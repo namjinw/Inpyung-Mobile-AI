@@ -9,7 +9,6 @@ contextBridge.exposeInMainWorld('api', {
   install: () => ipcRenderer.invoke('install'),
   login: () => ipcRenderer.invoke('login'),
   launch: () => ipcRenderer.invoke('launch'),
-  reset: () => ipcRenderer.invoke('reset'),
   settingsReply: (ok) => ipcRenderer.send('settings-reply', ok),
   onStep: on('step'),
   onLog: on('log'),

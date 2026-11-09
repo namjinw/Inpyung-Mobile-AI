@@ -1,4 +1,4 @@
-// 화면과 session\logs\app.log에 같이 남기는 로그 (log 폴더가 session 안이라 같이 삭제됨)
+// 화면과 data\logs\app.log에 같이 남기는 로그
 const fs = require('fs')
 const path = require('path')
 const { dirs } = require('./paths.cjs')
