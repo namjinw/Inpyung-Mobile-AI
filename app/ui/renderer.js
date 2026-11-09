@@ -87,12 +87,13 @@ mainBtn.addEventListener('click', async () => {
   const r = await window.api.install()
   if (!r.ok) setPhase('failed')
 })
-$('reset').addEventListener('click', async () => {
-  if (!confirm('Claude를 종료하고 로그인 정보와 설치 파일(전용 폴더)을 삭제할까요?\n작업 폴더의 파일은 지우지 않아요.')) return
-  const r = await window.api.reset()
-  if (!r.ok) alert(r.error || r.err)
+$('reinstall').addEventListener('click', async () => {
+  if (phase === 'installing' || phase === 'loggingin') return
+  if (!confirm('설정 저장소에서 팀 설정을 다시 받아 적용할까요?\n로그인과 대화 기록은 그대로 두고, 설정 파일만 새 버전으로 바뀌어요.')) return
   resetSteps()
-  showCheck()
+  setPhase('installing')
+  const r = await window.api.install()
+  if (!r.ok) setPhase('failed')
 })
 
 // ⑥ 메인에서 오는 알림

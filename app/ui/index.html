@@ -35,7 +35,7 @@
 
             <div class="actions">
               <button id="main" data-phase="idle">설치</button>
-              <button id="reset" class="ghost">리셋 (전용 폴더 삭제)</button>
+              <button id="reinstall" class="ghost">설정 다시 받기</button>
             </div>
 
             <section class="card grow">
@@ -54,13 +54,13 @@
             <div class="cards">
               <section class="card">
                 <h2>로그인</h2>
-                <p>설치가 끝나면 앱에서 먼저 [로그인]을 눌러 <b>본인 Claude 계정</b>으로 로그인하세요. 한 번 로그인하면 이후 [실행]으로 여는 Claude Code 창은 모두 자동으로 로그인돼요. [새 Claude Code 창 열기]로 여러 개를 동시에 쓸 수 있어요. 유료 플랜 등 사용 조건은 공식 문서에서 확인해 주세요.</p>
-                <p>공용 PC라면 로그인 주소를 <b>시크릿 창</b>에서 열어 주세요. 브라우저에 남은 claude.ai 로그인은 이 앱이 지울 수 없어요.</p>
+                <p>설치가 끝나면 앱에서 먼저 [로그인]을 눌러 <b>본인 Claude 계정</b>으로 로그인하세요. 로그인은 앱 폴더에 저장돼서 앱을 껐다 켜도 유지되고, [실행]으로 여는 Claude Code 창은 모두 자동으로 로그인돼요. 이전에 나눈 대화가 있으면 [실행]할 때 이어서 시작해요(이미 열린 창이 있으면 새 대화로 열려요). 테마는 dark가 기본이에요. [새 Claude Code 창 열기]로 여러 개를 동시에 쓸 수 있어요. 유료 플랜 등 사용 조건은 공식 문서에서 확인해 주세요.</p>
+                <p>이미 PC에 Claude Code가 설치돼 있으면 그 프로그램을 그대로 써요. 단, 로그인과 설정은 원래 쓰던 <b>~/.claude와 따로</b> 이 앱 폴더에 저장돼서 서로 영향을 주지 않아요.</p>
               </section>
               <section class="card">
                 <h2>설정 저장소 (GitHub)</h2>
                 <p>환경 설정 저장소가 비공개면 받을 때 <b>GitHub 로그인 창</b>이 한 번 뜰 수 있어요. 저장소에 접근 권한이 있는 계정으로 로그인하세요.</p>
-                <p>이 로그인 정보는 Git이 Windows 자격 증명 관리자에 저장해서 전용 폴더를 지워도 남아요. 공용 PC라면 사용 후 자격 증명 관리자에서 github.com 항목을 지워 주세요.</p>
+                <p>이 로그인 정보는 Git이 Windows 자격 증명 관리자에 저장해요. 공용 PC라면 사용 후 자격 증명 관리자에서 github.com 항목을 지워 주세요.</p>
               </section>
               <section class="card">
                 <h2>/report 명령</h2>
@@ -68,9 +68,9 @@
                 <p>코드 원문과 키는 보내지 않고, 전송 전에 내용을 먼저 보여주고 확인을 받아요. 실행하지 않으면 아무것도 전송되지 않아요.</p>
               </section>
               <section class="card">
-                <h2>삭제와 작업 폴더</h2>
-                <p>앱을 닫거나 [리셋]을 누르면 Claude 종료, 로그인 정보 삭제, 전용 폴더 삭제가 한 번에 진행돼요.</p>
-                <p>작업 폴더(<span id="work"></span>)는 지우지 않아요.</p>
+                <h2>저장 위치와 삭제</h2>
+                <p>이 앱은 설치만 하고, 앱을 닫아도 아무것도 지우지 않아요. 설정, 로그인, 대화 기록은 <code>%LOCALAPPDATA%/ClaudeContest/data</code>에 남아요. 지우려면 앱을 닫고 그 폴더를 직접 삭제하세요.</p>
+                <p>팀 설정이 바뀌었으면 [설정 다시 받기]를 눌러 주세요. 작업 폴더는 <span id="work"></span>예요.</p>
               </section>
             </div>
           </div>

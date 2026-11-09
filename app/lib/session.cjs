@@ -1,8 +1,9 @@
-// [F7][F8] 세션 상태, 실행, 종료 시 삭제, 시작 시 잔여물 정리
+// 상태 저장, 로그인 확인, 실행 (설치물과 로그인 정보는 지우지 않고 계속 쓴다)
 const fs = require('fs')
 const { spawn, execFile } = require('child_process')
-const { dirs, safeRemoveSession, prepareSession } = require('./paths.cjs')
-const { sessionPids, killSessionProcs } = require('./procs.cjs')
+const path = require('path')
+const { dirs, prepareSession } = require('./paths.cjs')
+const { sessionPids } = require('./procs.cjs')
 const { buildEnv } = require('./env.cjs')
 const { log } = require('./log.cjs')
 
@@ -16,34 +17,40 @@ const readState = () => {
 const writeState = (patch) => fs.writeFileSync(dirs.state, JSON.stringify({ ...readState(), ...patch }, null, 2))
 const isReady = () => !!readState().ready && fs.existsSync(dirs.claudeExe)
 
-// 지우고 결과를 돌려준다. 지우지 못해도 앱은 계속 동작하고, 다음 시작 때 다시 지운다.
-async function wipe() {
-  const killed = await killSessionProcs()
-  if (killed) log(`전용 폴더에서 실행 중이던 프로그램 ${killed}개를 종료했어요.`)
-  const r = await safeRemoveSession()
-  return r
+// 처음 켤 때 한 번만 기본값을 넣는다: 테마 dark, 온보딩(테마 고르기) 건너뛰기. 이미 있는 값은 바꾸지 않는다. (토큰은 다루지 않는다.)
+function seedConfig() {
+  const file = path.join(dirs.config, '.claude.json')
+  let j = {}
+  try {
+    j = JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch {} // 없거나 읽을 수 없으면 새로 만든다.
+  let changed = false
+  if (j.theme === undefined) ((j.theme = 'dark'), (changed = true))
+  if (j.hasCompletedOnboarding === undefined) ((j.hasCompletedOnboarding = true), (changed = true))
+  if (!changed) return
+  fs.mkdirSync(dirs.config, { recursive: true })
+  fs.writeFileSync(file, JSON.stringify(j, null, 2))
 }
 
-// [F8] 시작할 때 이전 세션이 남아 있으면 먼저 지운다.
-async function startupCleanup() {
-  const r = await wipe()
-  return r
+// 이 작업 폴더에서 이전에 나눈 대화가 있는지 (있으면 --continue로 이어서 시작한다)
+function hasPreviousChat() {
+  try {
+    const dir = path.join(dirs.config, 'projects', dirs.work.replace(/[^a-zA-Z0-9]/g, '-'))
+    return fs.readdirSync(dir).some((f) => f.endsWith('.jsonl'))
+  } catch {
+    return false
+  }
 }
 
-// [F7] 종료/리셋: claude 종료 → 전용 폴더 삭제 (로그인 정보도 이 폴더 안에 있어서 함께 삭제됨)
-async function reset() {
-  const r = await wipe()
-  log(r.ok ? '전용 폴더를 삭제했어요. 로그인 정보도 함께 지워졌어요.' : r.err)
-  return r
-}
-
-// claude를 새 콘솔 창에서 실행 (참가자 작업물 폴더에서 시작)
-function launch(bashPath) {
+// claude를 새 콘솔 창에서 실행 (참가자 작업물 폴더에서 시작). 이미 열린 창이 없고 이전 대화가 있으면 이어서 시작한다.
+async function launch(bashPath) {
   fs.mkdirSync(dirs.work, { recursive: true })
-  const cmd = `start "Claude Code" /D "${dirs.work}" "${dirs.claudeExe}"`
+  seedConfig()
+  const resume = hasPreviousChat() && !(await sessionPids()).length
+  const cmd = `start "Claude Code" /D "${dirs.work}" "${dirs.claudeExe}"${resume ? ' --continue' : ''}`
   const child = spawn('cmd.exe', ['/d', '/s', '/c', `"${cmd}"`], { env: buildEnv(bashPath), detached: true, stdio: 'ignore', windowsHide: true, windowsVerbatimArguments: true })
   child.unref()
-  log(`Claude Code를 실행했어요. 작업 폴더: ${dirs.work}`)
+  log(`Claude Code를 실행했어요.${resume ? ' 이전 대화를 이어서 시작해요.' : ''} 작업 폴더: ${dirs.work}`)
 }
 
 // 로그인 여부: claude가 직접 확인한다. (이 앱은 토큰을 읽거나 저장하지 않는다.)
@@ -62,6 +69,7 @@ const isLoggedIn = (bashPath) =>
 // 로그인 창(claude auth login)을 열고, 로그인이 끝날 때까지 기다린다. 로그인 정보는 전용 폴더(CLAUDE_CONFIG_DIR)에 claude가 저장한다.
 async function login(bashPath) {
   fs.mkdirSync(dirs.work, { recursive: true })
+  seedConfig()
   const cmd = `start "Claude 로그인" /D "${dirs.work}" "${dirs.claudeExe}" auth login`
   const child = spawn('cmd.exe', ['/d', '/s', '/c', `"${cmd}"`], { env: buildEnv(bashPath), detached: true, stdio: 'ignore', windowsHide: true, windowsVerbatimArguments: true })
   child.unref()
@@ -78,4 +86,4 @@ async function login(bashPath) {
 
 const isRunning = async () => (await sessionPids()).length > 0
 
-module.exports = { prepareSession, readState, writeState, isReady, startupCleanup, reset, launch, isRunning, isLoggedIn, login }
+module.exports = { prepareSession, readState, writeState, isReady, launch, isRunning, isLoggedIn, login }

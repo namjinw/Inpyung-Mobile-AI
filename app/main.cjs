@@ -1,4 +1,4 @@
-// 메인 프로세스: 창, IPC, 설치 단계 진행(F1), 종료 시 정리(F7)
+// 메인 프로세스: 창, IPC, 설치 단계 진행(F1). 앱을 닫아도 설치물과 로그인 정보는 지우지 않는다.
 const { app, BrowserWindow, ipcMain } = require('electron')
 
 // 두 번째로 켠 앱은 아무것도 등록하지 않고 바로 끝낸다. (먼저 켜진 앱의 전용 폴더를 지우면 안 된다.)
@@ -66,7 +66,7 @@ async function runInstall() {
 
     step(2, '클로드 설치', 'running')
     const cl = await install.claude(cfg, (pct, msg) => step(2, '클로드 설치', 'running', pct, msg))
-    step(2, '클로드 설치', 'done', 100, cl.version)
+    step(2, '클로드 설치', 'done', 100, cl.reused ? cl.version : `Claude Code ${cl.version}`)
 
     step(3, 'Git 준비', 'running')
     const g = await install.git(cfg, (pct, msg) => step(3, 'Git 준비', 'running', pct, msg))
@@ -90,7 +90,7 @@ async function runInstall() {
       step(4, '클로드 환경 설정 가져오기', 'done', 100, `${applied}개 항목을 적용했어요.`)
     }
 
-    session.writeState({ ready: true, claudeVersion: cl.version, bashPath: g.bashPath })
+    session.writeState({ ready: true, claudeVersion: cl.version, claudePath: paths.dirs.claudeExe, bashPath: g.bashPath })
     const loggedIn = await session.isLoggedIn(g.bashPath)
     send('state', { phase: loggedIn ? 'ready' : 'login' })
     log(loggedIn ? '설치가 끝났어요. [실행] 버튼을 눌러 Claude Code를 시작하세요.' : '설치가 끝났어요. [로그인]을 눌러 Claude 계정으로 로그인해 주세요.')
@@ -132,35 +132,16 @@ ipcMain.handle('launch', async () => {
     send('state', { phase: 'login' })
     return { ok: false, error: '먼저 [로그인]을 해 주세요.' }
   }
-  session.launch(session.readState().bashPath)
+  await session.launch(session.readState().bashPath)
   send('state', { phase: 'running' })
   startPolling()
   return { ok: true }
-})
-ipcMain.handle('reset', async () => {
-  if (busy) return { ok: false, error: '설치가 진행 중이에요. 끝난 뒤에 다시 눌러 주세요.' }
-  clearInterval(pollTimer)
-  const r = await session.reset()
-  send('state', { phase: 'idle', reset: true })
-  return r
-})
-
-// 앱을 끄면 claude 종료 → 전용 폴더 삭제 후 끝낸다. (강제 종료로 못 지우면 다음 시작 때 지운다.)
-app.on('before-quit', async (e) => {
-  if (quitting) return
-  e.preventDefault()
-  quitting = true
-  clearInterval(pollTimer)
-  await session.reset().catch(() => {})
-  app.exit(0)
 })
 app.on('window-all-closed', () => app.quit())
 
 app.whenReady().then(async () => {
   paths.init(app.getPath('documents'))
-  const r = await session.startupCleanup() // [F8] 화면을 띄우기 전에 먼저 끝내야 남은 세션이 '설치 완료'로 보이지 않는다.
   createWindow()
-  win.webContents.once('did-finish-load', () => log(r.ok ? '이전 실행에서 남은 파일이 없는지 확인했어요.' : r.err))
   if (SMOKE) {
     win.webContents.once('did-finish-load', async () => {
       await new Promise((r2) => setTimeout(r2, 1500))
