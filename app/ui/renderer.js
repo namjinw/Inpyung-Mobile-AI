@@ -132,7 +132,7 @@ window.api.onConfirmSettings((p) => {
   $('modalIgnored').textContent = extra.join(' ')
   // 작업 요약을 서버로 보내는 명령이 들어 있으면 적용 전에 한 번 더 알린다.
   $('modalWarn').hidden = !p.files.includes('commands/report.md')
-  $('modalWarn').textContent = '이 설정에는 /report 명령이 있어요. 실행하면 작업 요약이 서버로 전송돼요. (실행하지 않으면 전송되지 않아요.)'
+  $('modalWarn').textContent = '이 설정에는 /report 명령이 있어요. 실행하면 작업 요약과 Git 커밋 기록, Claude에게 한 질문, 파일 변동 목록이 서버로 전송돼요. (실행하지 않으면 전송되지 않아요.)'
   $('modalPreview').textContent = (p.claudeMd || '(CLAUDE.md가 없어요.)').split('\n').slice(0, 11).join('\n')
   $('modal').hidden = false
 })
