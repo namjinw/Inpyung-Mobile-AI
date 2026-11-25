@@ -14,7 +14,10 @@ const readState = () => {
     return {}
   }
 }
-const writeState = (patch) => fs.writeFileSync(dirs.state, JSON.stringify({ ...readState(), ...patch }, null, 2))
+const writeState = (patch) => {
+  fs.mkdirSync(path.dirname(dirs.state), { recursive: true })
+  fs.writeFileSync(dirs.state, JSON.stringify({ ...readState(), ...patch }, null, 2))
+}
 const isReady = () => !!readState().ready && fs.existsSync(dirs.claudeExe)
 
 // 처음 켤 때 한 번만 기본값을 넣는다: 테마 dark, 온보딩(테마 고르기) 건너뛰기. 이미 있는 값은 바꾸지 않는다. (토큰은 다루지 않는다.)
@@ -32,25 +35,58 @@ function seedConfig() {
   fs.writeFileSync(file, JSON.stringify(j, null, 2))
 }
 
-// 이 작업 폴더에서 이전에 나눈 대화가 있는지 (있으면 --continue로 이어서 시작한다)
-function hasPreviousChat() {
+// ── 작업 폴더 목록 (state.json에 저장). 기본 작업 폴더는 항상 맨 앞에 있고 목록에서 뺄 수 없다.
+const listFolders = () => {
+  const saved = (readState().folders || []).filter((f) => typeof f === 'string')
+  return [dirs.work, ...saved.filter((f) => f.toLowerCase() !== dirs.work.toLowerCase())]
+}
+const addFolder = (p) => {
+  const cur = listFolders()
+  if (!cur.some((f) => f.toLowerCase() === p.toLowerCase())) writeState({ folders: cur.slice(1).concat(p) })
+}
+const removeFolder = (p) => writeState({ folders: listFolders().slice(1).filter((f) => f.toLowerCase() !== p.toLowerCase()) })
+
+// cmd.exe의 start 명령에 문자열로 넘기므로, 명령을 바꿀 수 있는 문자가 들어 있으면 거부한다. (Windows 경로에는 원래 쓸 수 없는 문자들이다.)
+const UNSAFE = /["%^&|<>!\r\n\0]/
+function checkFolder(p) {
+  if (typeof p !== 'string' || !path.isAbsolute(p)) return '폴더 경로가 올바르지 않아요.'
+  if (UNSAFE.test(p)) return '폴더 경로에 쓸 수 없는 문자(% ^ & | < > ! ")가 들어 있어요. 이름을 바꾼 폴더를 골라 주세요.'
   try {
-    const dir = path.join(dirs.config, 'projects', dirs.work.replace(/[^a-zA-Z0-9]/g, '-'))
-    return fs.readdirSync(dir).some((f) => f.endsWith('.jsonl'))
+    if (!fs.statSync(p).isDirectory()) return '폴더가 아니에요.'
   } catch {
-    return false
+    return '이 폴더를 찾을 수 없어요.'
   }
+  return ''
 }
 
-// claude를 새 콘솔 창에서 실행 (참가자 작업물 폴더에서 시작). 이미 열린 창이 없고 이전 대화가 있으면 이어서 시작한다.
-async function launch(bashPath) {
-  fs.mkdirSync(dirs.work, { recursive: true })
+// 이 폴더에서 나눈 대화 기록: 시작 시각이 최근인 순서. (claude가 폴더 경로를 영문·숫자 외 문자를 '-'로 바꾼 이름으로 저장한다.)
+function listChats(folder) {
+  try {
+    const dir = path.join(dirs.config, 'projects', folder.replace(/[^a-zA-Z0-9]/g, '-'))
+    return fs
+      .readdirSync(dir)
+      .filter((f) => f.endsWith('.jsonl'))
+      .map((f) => fs.statSync(path.join(dir, f)).mtimeMs)
+      .sort((a, b) => b - a)
+  } catch {
+    return []
+  }
+}
+const hasPreviousChat = (folder) => listChats(folder).length > 0
+
+// claude를 새 콘솔 창에서 실행. mode가 'continue'이고 이전 대화가 있으면 이어서, 아니면 새 대화로 시작한다.
+async function launch(bashPath, folder = dirs.work, mode = 'continue') {
+  if (folder === dirs.work) fs.mkdirSync(folder, { recursive: true })
+  const bad = checkFolder(folder)
+  if (bad) throw new Error(bad)
   seedConfig()
-  const resume = hasPreviousChat() && !(await sessionPids()).length
-  const cmd = `start "Claude Code" /D "${dirs.work}" "${dirs.claudeExe}"${resume ? ' --continue' : ''}`
+  // 이미 열린 창이 있을 때 --continue를 쓰면 같은 대화를 두 창이 함께 쓰게 돼서, 그때는 새 대화로 연다.
+  const resume = mode === 'continue' && hasPreviousChat(folder) && !(await sessionPids()).length
+  const cmd = `start "Claude Code" /D "${folder}" "${dirs.claudeExe}"${resume ? ' --continue' : ''}`
   const child = spawn('cmd.exe', ['/d', '/s', '/c', `"${cmd}"`], { env: buildEnv(bashPath), detached: true, stdio: 'ignore', windowsHide: true, windowsVerbatimArguments: true })
   child.unref()
-  log(`Claude Code를 실행했어요.${resume ? ' 이전 대화를 이어서 시작해요.' : ''} 작업 폴더: ${dirs.work}`)
+  log(`Claude Code를 ${resume ? '이어서' : '새 대화로'} 실행했어요. 작업 폴더: ${folder}`)
+  return { resumed: resume }
 }
 
 // 로그인 여부: claude가 직접 확인한다. (이 앱은 토큰을 읽거나 저장하지 않는다.)
@@ -86,4 +122,4 @@ async function login(bashPath) {
 
 const isRunning = async () => (await sessionPids()).length > 0
 
-module.exports = { prepareSession, readState, writeState, isReady, launch, isRunning, isLoggedIn, login }
+module.exports = { prepareSession, readState, writeState, isReady, launch, isRunning, isLoggedIn, login, listFolders, addFolder, removeFolder, checkFolder, listChats }

@@ -1,0 +1,2 @@
+Pretendard Variable (SIL Open Font License 1.1)
+https://github.com/orioncactus/pretendard
