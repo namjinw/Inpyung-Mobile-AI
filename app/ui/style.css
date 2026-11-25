@@ -165,3 +165,6 @@ details.okbox .items span:first-child { min-width: 110px; color: var(--muted); }
 #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: 560px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--fail); border-radius: 12px; padding: 12px 18px; box-shadow: 0 8px 30px rgba(0, 0, 0, .4); z-index: 20; font-size: 14px; }
 #toast.info { border-left-color: var(--ok); }
 #askMsg { white-space: pre-line; margin: 0 0 4px; }
+.card.prob { display: flex; align-items: center; gap: 14px; padding: 14px 16px; }
+.card.prob b { font-size: 13px; color: var(--muted); font-weight: 500; }
+.card.prob .path { color: var(--text); margin: 2px 0; }

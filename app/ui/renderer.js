@@ -138,7 +138,10 @@ function renderHome() {
     b.classList.toggle('on', b.dataset.mode === mode)
     if (b.dataset.mode === 'continue') b.disabled = !f.chats
   })
-  $('modeHint').textContent = mode === 'continue' ? '마지막 대화를 이어서 시작해요. 이미 열린 Claude Code 창이 있으면 새 대화로 열려요.' : '빈 대화로 시작해요.'
+  $('modeHint').textContent = mode === 'continue' ? '마지막 대화를 이어서 시작해요. 이미 열린 Claude Code 창이 있으면 새 대화로 열려요.' : info.problemDir ? '새 대화로 시작해요. 문제 폴더를 함께 열고 문제 파일을 먼저 읽게 해요.' : '빈 대화로 시작해요.'
+  $('probPath').textContent = info.problemDir || '아직 정하지 않았어요'
+  $('probClear').hidden = !info.problemDir
+  $('probPick').textContent = info.problemDir ? '바꾸기' : '폴더 선택'
   $('launchBtn').textContent = phase === 'running' ? '세션 하나 더 열기 ▶' : '세션 열기 ▶'
 
   // 이 폴더의 대화 기록 (최근 5개)
@@ -194,6 +197,19 @@ $('addFolder').addEventListener('click', async () => {
   await loadFolders()
   mode = current()?.chats ? 'continue' : 'new'
   showPage('home')
+  renderHome()
+})
+$('probPick').addEventListener('click', async () => {
+  const r = await window.api.setProblem('pick')
+  if (r.error) return toast(r.error)
+  if (!r.ok) return
+  info.problemDir = r.path
+  renderHome()
+})
+$('probClear').addEventListener('click', async () => {
+  const r = await window.api.setProblem('clear')
+  if (!r.ok) return toast(r.error || '해제하지 못했어요.')
+  info.problemDir = ''
   renderHome()
 })
 $('openExplorer').addEventListener('click', async () => {

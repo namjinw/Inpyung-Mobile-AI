@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('api', {
   launch: (opts) => ipcRenderer.invoke('launch', opts),
   folders: () => ipcRenderer.invoke('folders'),
   chats: (f) => ipcRenderer.invoke('chats', f),
+  setProblem: (action) => ipcRenderer.invoke('set-problem', action),
   addFolder: () => ipcRenderer.invoke('add-folder'),
   removeFolder: (f) => ipcRenderer.invoke('remove-folder', f),
   openFolder: (f) => ipcRenderer.invoke('open-folder', f),

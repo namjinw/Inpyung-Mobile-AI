@@ -122,7 +122,7 @@ const folderInfo = (f) => {
   return { path: f, name: path.basename(f) || f, isDefault: f === paths.dirs.work, chats: chats.length, last: chats[0] || 0, exists: fs.existsSync(f) }
 }
 
-ipcMain.handle('info', async () => ({ version: app.getVersion(), ready: session.isReady(), loggedIn: session.isReady() && (await session.isLoggedIn(session.readState().bashPath)), placeholder: settings.isPlaceholder(cfg), repo: cfg.settingsRepo, tag: cfg.settingsTag, work: paths.dirs.work }))
+ipcMain.handle('info', async () => ({ version: app.getVersion(), problemDir: session.getProblemDir(), ready: session.isReady(), loggedIn: session.isReady() && (await session.isLoggedIn(session.readState().bashPath)), placeholder: settings.isPlaceholder(cfg), repo: cfg.settingsRepo, tag: cfg.settingsTag, work: paths.dirs.work }))
 ipcMain.handle('check', () => check.run(cfg))
 ipcMain.handle('folders', () => session.listFolders().map(folderInfo))
 ipcMain.handle('chats', (e, f) => (trusted(e) && session.listFolders().includes(f) ? session.listChats(f) : []))
@@ -133,6 +133,17 @@ ipcMain.handle('add-folder', async (e) => {
   const bad = session.checkFolder(r.filePaths[0])
   if (bad) return { ok: false, error: bad }
   session.addFolder(r.filePaths[0])
+  return { ok: true, path: r.filePaths[0] }
+})
+// 문제 폴더: 고르거나(pick) 비운다(clear)
+ipcMain.handle('set-problem', async (e, action) => {
+  if (!trusted(e)) return { ok: false, error: '허용되지 않은 요청이에요.' }
+  if (action === 'clear') return (session.setProblemDir(''), { ok: true, path: '' })
+  const r = await dialog.showOpenDialog(win, { title: '문제 폴더 선택', properties: ['openDirectory'] })
+  if (r.canceled || !r.filePaths[0]) return { ok: false, canceled: true }
+  const bad = session.checkFolder(r.filePaths[0])
+  if (bad) return { ok: false, error: bad }
+  session.setProblemDir(r.filePaths[0])
   return { ok: true, path: r.filePaths[0] }
 })
 ipcMain.handle('remove-folder', (e, f) => (trusted(e) ? (session.removeFolder(f), { ok: true }) : { ok: false }))

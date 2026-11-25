@@ -74,7 +74,7 @@ npm run pack
 | `settingsRepo` | 설정 저장소 (`소유자/저장소`) |
 | `settingsTag` | 받을 태그 (예: `v0.1.0`). 보통은 아래 `.env`의 `SETTINGS_TAG`가 이 값을 덮어써요. |
 | `settingsDir` | 저장소 안의 설정 폴더 (`.claude`) |
-| `settingsFiles` | 적용을 허용하는 항목 (`CLAUDE.md`, `settings.json`, `skills`, `commands`, `agents`) |
+| `settingsFiles` | 적용을 허용하는 항목 (`CLAUDE.md`, `settings.json`, `skills`, `commands`, `agents`, `grading`) |
 | `gitTag`, `gitFile`, `gitSha256` | 휴대용 Git 버전과 해시 |
 | `minFreeGB` | 필요한 최소 디스크 여유 공간 |
 | `useCache` | 내려받은 설치 파일 캐시 사용 여부 |

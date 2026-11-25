@@ -46,6 +46,12 @@ const addFolder = (p) => {
 }
 const removeFolder = (p) => writeState({ folders: listFolders().slice(1).filter((f) => f.toLowerCase() !== p.toLowerCase()) })
 
+// 문제 폴더: 대회 문제 파일이 들어 있는 폴더. 한 곳만 정하고, 비우면 쓰지 않는다.
+const getProblemDir = () => (typeof readState().problemDir === 'string' ? readState().problemDir : '')
+const setProblemDir = (p) => writeState({ problemDir: p || '' })
+// 따옴표 없는 고정 문장만 쓴다. (명령줄에 그대로 들어가기 때문)
+const PROBLEM_PROMPT = '문제 폴더의 파일을 모두 읽고 요구사항과 제출 조건을 먼저 정리해 줘. 코드는 내가 시킬 때까지 작성하지 마.'
+
 // cmd.exe의 start 명령에 문자열로 넘기므로, 명령을 바꿀 수 있는 문자가 들어 있으면 거부한다. (Windows 경로에는 원래 쓸 수 없는 문자들이다.)
 const UNSAFE = /["%^&|<>!\r\n\0]/
 function checkFolder(p) {
@@ -82,7 +88,18 @@ async function launch(bashPath, folder = dirs.work, mode = 'continue') {
   seedConfig()
   // 이미 열린 창이 있을 때 --continue를 쓰면 같은 대화를 두 창이 함께 쓰게 돼서, 그때는 새 대화로 연다.
   const resume = mode === 'continue' && hasPreviousChat(folder) && !(await sessionPids()).length
-  const cmd = `start "Claude Code" /D "${folder}" "${dirs.claudeExe}"${resume ? ' --continue' : ''}`
+  // 문제 폴더가 정해져 있으면 Claude가 읽을 수 있게 함께 열고, 새 대화일 때는 먼저 읽고 정리하도록 첫 요청을 넣는다.
+  let extra = ''
+  const pd = getProblemDir()
+  if (pd) {
+    const bad = checkFolder(pd)
+    if (bad) log(`문제 폴더를 쓰지 않았어요: ${bad}`)
+    else {
+      extra = ` --add-dir "${pd}"`
+      if (!resume) extra += ` "${PROBLEM_PROMPT}"`
+    }
+  }
+  const cmd = `start "Claude Code" /D "${folder}" "${dirs.claudeExe}"${resume ? ' --continue' : ''}${extra}`
   const child = spawn('cmd.exe', ['/d', '/s', '/c', `"${cmd}"`], { env: buildEnv(bashPath), detached: true, stdio: 'ignore', windowsHide: true, windowsVerbatimArguments: true })
   child.unref()
   log(`Claude Code를 ${resume ? '이어서' : '새 대화로'} 실행했어요. 작업 폴더: ${folder}`)
@@ -122,4 +139,4 @@ async function login(bashPath) {
 
 const isRunning = async () => (await sessionPids()).length > 0
 
-module.exports = { prepareSession, readState, writeState, isReady, launch, isRunning, isLoggedIn, login, listFolders, addFolder, removeFolder, checkFolder, listChats }
+module.exports = { prepareSession, readState, writeState, isReady, launch, isRunning, isLoggedIn, login, getProblemDir, setProblemDir, listFolders, addFolder, removeFolder, checkFolder, listChats }
