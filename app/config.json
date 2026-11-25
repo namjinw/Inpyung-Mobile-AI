@@ -2,7 +2,7 @@
   "settingsRepo": "namjinw/Inpyung-Mobile-AI-Setting",
   "settingsTag": "latest",
   "settingsDir": ".claude",
-  "settingsFiles": ["CLAUDE.md", "settings.json", "skills", "commands", "agents"],
+  "settingsFiles": ["CLAUDE.md", "settings.json", "skills", "commands", "agents", "grading"],
   "gitTag": "v2.56.0.windows.4",
   "gitFile": "PortableGit-2.56.0.4-64-bit.7z.exe",
   "gitSha256": "b1f3e52216e2ed6882d1bebfd4d3fdf319bec40d2edbbf9fd26ec4fd3fce7ed1",

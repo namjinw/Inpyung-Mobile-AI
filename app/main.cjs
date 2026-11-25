@@ -1,5 +1,5 @@
 // 메인 프로세스: 창, IPC, 설치 단계 진행(F1). 앱을 닫아도 설치물과 로그인 정보는 지우지 않는다.
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 
 // 두 번째로 켠 앱은 아무것도 등록하지 않고 바로 끝낸다. (먼저 켜진 앱의 전용 폴더를 지우면 안 된다.)
 if (!app.requestSingleInstanceLock()) {
@@ -34,10 +34,10 @@ function createWindow() {
   win = new BrowserWindow({
     width: 1000,
     height: 720,
-    minWidth: 800, // 이보다 작으면 스크롤 없이 한 화면에 담기지 않아서 줄이지 못하게 한다.
-    minHeight: 660,
+    minWidth: 860,
+    minHeight: 600,
     title: 'Claude Code 대회 준비 도구',
-    backgroundColor: '#14151a',
+    backgroundColor: '#1a1816',
     icon: path.join(__dirname, 'assets', 'icon.ico'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   })
@@ -115,8 +115,43 @@ function startPolling() {
   }, 3000)
 }
 
-ipcMain.handle('info', async () => ({ ready: session.isReady(), loggedIn: session.isReady() && (await session.isLoggedIn(session.readState().bashPath)), placeholder: settings.isPlaceholder(cfg), repo: cfg.settingsRepo, tag: cfg.settingsTag, work: paths.dirs.work }))
+// 우리 화면(file://)에서 온 요청만 받는다.
+const trusted = (e) => !!e.senderFrame && e.senderFrame.url.startsWith('file://')
+const folderInfo = (f) => {
+  const chats = session.listChats(f)
+  return { path: f, name: path.basename(f) || f, isDefault: f === paths.dirs.work, chats: chats.length, last: chats[0] || 0, exists: fs.existsSync(f) }
+}
+
+ipcMain.handle('info', async () => ({ version: app.getVersion(), problemDir: session.getProblemDir(), ready: session.isReady(), loggedIn: session.isReady() && (await session.isLoggedIn(session.readState().bashPath)), placeholder: settings.isPlaceholder(cfg), repo: cfg.settingsRepo, tag: cfg.settingsTag, work: paths.dirs.work }))
 ipcMain.handle('check', () => check.run(cfg))
+ipcMain.handle('folders', () => session.listFolders().map(folderInfo))
+ipcMain.handle('chats', (e, f) => (trusted(e) && session.listFolders().includes(f) ? session.listChats(f) : []))
+ipcMain.handle('add-folder', async (e) => {
+  if (!trusted(e)) return { ok: false, error: '허용되지 않은 요청이에요.' }
+  const r = await dialog.showOpenDialog(win, { title: '작업 폴더 선택', properties: ['openDirectory', 'createDirectory'] })
+  if (r.canceled || !r.filePaths[0]) return { ok: false, canceled: true }
+  const bad = session.checkFolder(r.filePaths[0])
+  if (bad) return { ok: false, error: bad }
+  session.addFolder(r.filePaths[0])
+  return { ok: true, path: r.filePaths[0] }
+})
+// 문제 폴더: 고르거나(pick) 비운다(clear)
+ipcMain.handle('set-problem', async (e, action) => {
+  if (!trusted(e)) return { ok: false, error: '허용되지 않은 요청이에요.' }
+  if (action === 'clear') return (session.setProblemDir(''), { ok: true, path: '' })
+  const r = await dialog.showOpenDialog(win, { title: '문제 폴더 선택', properties: ['openDirectory'] })
+  if (r.canceled || !r.filePaths[0]) return { ok: false, canceled: true }
+  const bad = session.checkFolder(r.filePaths[0])
+  if (bad) return { ok: false, error: bad }
+  session.setProblemDir(r.filePaths[0])
+  return { ok: true, path: r.filePaths[0] }
+})
+ipcMain.handle('remove-folder', (e, f) => (trusted(e) ? (session.removeFolder(f), { ok: true }) : { ok: false }))
+ipcMain.handle('open-folder', async (e, f) => {
+  if (!trusted(e) || !session.listFolders().includes(f)) return { ok: false, error: '목록에 없는 폴더예요.' }
+  const err = await shell.openPath(f)
+  return err ? { ok: false, error: err } : { ok: true }
+})
 ipcMain.handle('install', () => runInstall())
 ipcMain.handle('login', async () => {
   if (!session.isReady()) return { ok: false, error: '아직 설치가 끝나지 않았어요. 먼저 [설치]를 눌러 주세요.' }
@@ -126,13 +161,20 @@ ipcMain.handle('login', async () => {
   if (r.ok) log('로그인했어요. 이제 [실행]으로 Claude Code를 여러 개 열 수 있어요. 로그인은 모든 창에서 함께 쓰여요.')
   return r
 })
-ipcMain.handle('launch', async () => {
+ipcMain.handle('launch', async (e, opts = {}) => {
+  if (!trusted(e)) return { ok: false, error: '허용되지 않은 요청이에요.' }
+  const folder = session.listFolders().includes(opts.folder) ? opts.folder : paths.dirs.work
+  const mode = opts.mode === 'new' ? 'new' : 'continue'
   if (!session.isReady()) return { ok: false, error: '아직 설치가 끝나지 않았어요. 먼저 [설치]를 눌러 주세요.' }
   if (!(await session.isLoggedIn(session.readState().bashPath))) {
     send('state', { phase: 'login' })
     return { ok: false, error: '먼저 [로그인]을 해 주세요.' }
   }
-  await session.launch(session.readState().bashPath)
+  try {
+    await session.launch(session.readState().bashPath, folder, mode)
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
   send('state', { phase: 'running' })
   startPolling()
   return { ok: true }
@@ -145,7 +187,7 @@ app.whenReady().then(async () => {
   if (SMOKE) {
     win.webContents.once('did-finish-load', async () => {
       await new Promise((r2) => setTimeout(r2, 1500))
-      const out = await win.webContents.executeJavaScript(`JSON.stringify({title:document.title,btn:document.getElementById('main').textContent,steps:document.querySelectorAll('.step').length,env:document.querySelectorAll('#env li').length,api:typeof window.api})`)
+      const out = await win.webContents.executeJavaScript(`JSON.stringify({title:document.title,view:document.body.dataset.view,steps:document.querySelectorAll('.step').length,nav:document.querySelectorAll('#side [data-page]').length,api:typeof window.api})`)
       console.log('SMOKE ' + out)
       app.exit(0)
     })

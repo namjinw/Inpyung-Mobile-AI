@@ -6,109 +6,165 @@
     <title>Claude Code 대회 준비 도구</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
-    <div id="app">
-      <!-- 사이드바: 메뉴로 화면을 바꾼다. ☰ 버튼으로 열고 닫는다. -->
-      <aside id="side">
-        <div class="brand"><img src="../assets/logo-circle.png" alt="" /><div>Claude Code<br /><span>대회 준비 도구</span></div></div>
-        <nav>
-          <button data-page="install" class="active">설치</button>
-          <button data-page="guide">안내</button>
-          <button data-page="log">로그</button>
-        </nav>
-      </aside>
-
-      <section id="content">
-        <header>
-          <button id="toggle" class="icon" title="사이드바 열기/닫기">☰</button>
-          <h1 id="title">설치</h1>
-          <span id="phaseTag" class="tag">대기</span>
-        </header>
-
-        <main>
-          <!-- 설치: 환경 점검 + 버튼 + 단계 진행 (한 화면에 모두 보임) -->
-          <div class="page" id="page-install">
-            <section class="card">
-              <h2>환경 점검</h2>
-              <ul id="env"><li class="muted">점검하는 중…</li></ul>
-            </section>
-
-            <div class="actions">
-              <button id="main" data-phase="idle">설치</button>
-              <button id="reinstall" class="ghost">설정 다시 받기</button>
-            </div>
-
-            <section class="card grow">
-              <h2>진행 상황</h2>
-              <ol id="steps">
-                <li class="step" data-i="1"><div class="row"><span class="name">1/4 환경 점검</span><span class="badge">대기</span></div><div class="bar"><i></i></div><div class="msg"></div></li>
-                <li class="step" data-i="2"><div class="row"><span class="name">2/4 클로드 설치</span><span class="badge">대기</span></div><div class="bar"><i></i></div><div class="msg"></div></li>
-                <li class="step" data-i="3"><div class="row"><span class="name">3/4 Git 준비</span><span class="badge">대기</span></div><div class="bar"><i></i></div><div class="msg"></div></li>
-                <li class="step" data-i="4"><div class="row"><span class="name">4/4 클로드 환경 설정 가져오기</span><span class="badge">대기</span></div><div class="bar"><i></i></div><div class="msg"></div></li>
-              </ol>
-            </section>
+  <body data-view="setup">
+    <!-- ① 첫 설치 화면: 사이드바 없이 가운데에 설치 단계만 보여준다. 설치가 끝나면 ②로 바뀐다. -->
+    <div id="setup">
+      <div class="setup-box">
+        <div class="setup-head">
+          <img src="../assets/logo-circle.png" alt="" />
+          <div>
+            <h1>처음 한 번만 준비하면 돼요</h1>
+            <p class="mu" id="setupSub">Claude Code와 팀 설정을 설치해요. 중간에 닫아도 이어서 할 수 있어요.</p>
           </div>
-
-          <!-- 안내: [F6] 로그인 안내와 전송/삭제 안내 -->
-          <div class="page" id="page-guide" hidden>
-            <div class="cards">
-              <section class="card">
-                <h2>로그인</h2>
-                <p>설치가 끝나면 앱에서 먼저 [로그인]을 눌러 <b>본인 Claude 계정</b>으로 로그인하세요. 로그인은 앱 폴더에 저장돼서 앱을 껐다 켜도 유지되고, [실행]으로 여는 Claude Code 창은 모두 자동으로 로그인돼요. 이전에 나눈 대화가 있으면 [실행]할 때 이어서 시작해요(이미 열린 창이 있으면 새 대화로 열려요). 테마는 dark가 기본이에요. [새 Claude Code 창 열기]로 여러 개를 동시에 쓸 수 있어요. 유료 플랜 등 사용 조건은 공식 문서에서 확인해 주세요.</p>
-                <p>이미 PC에 Claude Code가 설치돼 있으면 그 프로그램을 그대로 써요. 단, 로그인과 설정은 원래 쓰던 <b>~/.claude와 따로</b> 이 앱 폴더에 저장돼서 서로 영향을 주지 않아요.</p>
-              </section>
-              <section class="card">
-                <h2>설정 저장소 (GitHub)</h2>
-                <p>환경 설정 저장소가 비공개면 받을 때 <b>GitHub 로그인 창</b>이 한 번 뜰 수 있어요. 저장소에 접근 권한이 있는 계정으로 로그인하세요.</p>
-                <p>이 로그인 정보는 Git이 Windows 자격 증명 관리자에 저장해요. 공용 PC라면 사용 후 자격 증명 관리자에서 github.com 항목을 지워 주세요.</p>
-              </section>
-              <section class="card">
-                <h2>/report 명령</h2>
-                <p>환경 설정에 <b>/report</b> 명령이 들어 있어요. 실행하면 작업한 문제와 진행 상황의 요약, 오늘의 <b>Git 커밋 기록, Claude에게 한 질문 전체, 만들거나 삭제한 파일·폴더 목록</b>이 <b>서버로 전송</b>되고 팀원이 볼 수 있어요.</p>
-                <p>코드 원문과 키는 보내지 않고, 전송 전에 내용을 먼저 보여주고 확인을 받아요. 실행하지 않으면 아무것도 전송되지 않아요.</p>
-              </section>
-              <section class="card">
-                <h2>저장 위치와 삭제</h2>
-                <p>이 앱은 설치만 하고, 앱을 닫아도 아무것도 지우지 않아요. 설정, 로그인, 대화 기록은 <code>%LOCALAPPDATA%/ClaudeContest/data</code>에 남아요. 지우려면 앱을 닫고 그 폴더를 직접 삭제하세요.</p>
-                <p>팀 설정이 바뀌었으면 [설정 다시 받기]를 눌러 주세요. 작업 폴더는 <span id="work"></span>예요.</p>
-              </section>
-            </div>
-          </div>
-
-          <!-- 로그: 가장 최근 줄만 보여준다 (스크롤 없음) -->
-          <div class="page" id="page-log" hidden>
-            <section class="card grow logcard">
-              <h2>로그 <span class="muted">(최근 기록만 표시돼요)</span></h2>
-              <pre id="log"></pre>
-            </section>
-          </div>
-        </main>
-      </section>
+        </div>
+        <ol id="steps" class="card steps">
+          <li class="step" data-i="1"><span class="c">1</span><div class="t"><b>환경 점검</b><span class="msg">컴퓨터가 설치 조건에 맞는지 확인해요</span><div class="bar"><i></i></div></div><span class="badge">대기</span></li>
+          <li class="step" data-i="2"><span class="c">2</span><div class="t"><b>Claude Code 설치</b><span class="msg">설치 파일을 내려받아요</span><div class="bar"><i></i></div></div><span class="badge">대기</span></li>
+          <li class="step" data-i="3"><span class="c">3</span><div class="t"><b>Git 준비</b><span class="msg">시스템 Git을 쓸 수 있는지 확인해요</span><div class="bar"><i></i></div></div><span class="badge">대기</span></li>
+          <li class="step" data-i="4"><span class="c">4</span><div class="t"><b>팀 설정 가져오기</b><span class="msg">마지막에 적용할 파일을 보여드려요</span><div class="bar"><i></i></div></div><span class="badge">대기</span></li>
+        </ol>
+        <div class="row">
+          <button id="install" class="btn l">설치 시작</button>
+          <span class="mu sp small" id="setupNote">설치가 끝나면 홈으로 이동해요.</span>
+        </div>
+      </div>
     </div>
 
-    <!-- [F5][F11] 설정 적용 전 확인 창 -->
-    <div id="modal" hidden>
-      <div class="dialog">
+    <!-- ② 본 화면: 왼쪽에 폴더와 세션, 가운데에 지금 할 일 -->
+    <div id="app">
+      <aside id="side">
+        <div class="brand"><img src="../assets/logo-circle.png" alt="" /><div>Claude Code<span>대회 준비 도구</span></div></div>
+        <button id="newSession" class="btn blk">＋ 새 세션</button>
+        <div class="sec">작업 폴더</div>
+        <div id="projects" class="projects"></div>
+        <button id="addFolder" class="proj add">＋ 폴더 추가</button>
+        <div class="foot">
+          <button class="nv" data-page="env"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8 12l3 3 5-6" /></svg>대회 환경<span id="envChip" class="chip sp" hidden></span></button>
+          <button class="nv" data-page="settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" /></svg>설정</button>
+          <div class="ver" id="ver"></div>
+        </div>
+      </aside>
+
+      <main id="main">
+        <!-- 홈 -->
+        <section class="page" id="page-home">
+          <div class="top">
+            <div><h1 id="hName"></h1><div class="path" id="hPath"></div></div>
+            <button id="openExplorer" class="btn g s sp">탐색기에서 열기</button>
+          </div>
+
+          <div class="hero">
+            <h2 id="heroTitle"></h2>
+            <p class="mu" id="heroSub"></p>
+
+            <!-- 로그인이 필요할 때 -->
+            <div class="composer" id="loginBox" hidden>
+              <div class="t">먼저 본인 Claude 계정으로 로그인해 주세요</div>
+              <div class="row"><span class="mu small">브라우저가 열려요. 로그인은 이 앱 폴더에 저장돼서 다시 하지 않아도 돼요.</span><button id="loginBtn" class="btn l sp">로그인</button></div>
+            </div>
+
+            <!-- 로그인이 끝났을 때 -->
+            <div class="composer" id="launchBox" hidden>
+              <div class="t">이 폴더에서 Claude Code 세션을 열어요</div>
+              <div class="row">
+                <div class="seg" id="mode"><button data-mode="continue" class="on">이어서</button><button data-mode="new">새 대화</button></div>
+                <button id="launchBtn" class="btn l sp">세션 열기 ▶</button>
+              </div>
+              <div class="mu small" id="modeHint"></div>
+            </div>
+          </div>
+
+          <div class="card prob">
+            <div>
+              <b>문제 폴더</b>
+              <div class="path" id="probPath"></div>
+              <div class="mu small">정해 두면 새 대화를 열 때 이 폴더를 함께 열고, 문제 파일을 먼저 읽게 해요.</div>
+            </div>
+            <div class="row sp"><button id="probPick" class="btn g s">폴더 선택</button><button id="probClear" class="btn g s" hidden>해제</button></div>
+          </div>
+
+          <div class="sum">
+            <div class="card"><b>대회 환경</b><span id="sumEnv" class="line"></span><button class="btn g s" data-go="env">확인하기</button></div>
+            <div class="card"><b>팀 설정</b><span id="sumSet" class="line"></span><button class="btn g s" id="sumReinstall">설정 다시 받기</button></div>
+          </div>
+
+          <div class="hist">
+            <h3>이 폴더의 대화 기록</h3>
+            <div id="hist"></div>
+          </div>
+        </section>
+
+        <!-- 대회 환경 -->
+        <section class="page" id="page-env" hidden>
+          <div class="top">
+            <div><h1>대회 환경</h1><div class="mu" id="envSum">점검하는 중…</div></div>
+            <button id="recheck" class="btn s sp">다시 점검</button>
+          </div>
+          <div id="envList" class="stack"></div>
+        </section>
+
+        <!-- 설정 -->
+        <section class="page" id="page-settings" hidden>
+          <div class="top"><div><h1>설정</h1><div class="mu">팀 설정, 안내, 로그를 한곳에서 봐요.</div></div></div>
+
+          <div class="card">
+            <h2>팀 설정</h2>
+            <p class="mu" id="setRepo"></p>
+            <p>팀 설정이 바뀌었으면 다시 받아 적용해요. 로그인과 대화 기록은 그대로 두고, 설정 파일만 새 버전으로 바뀌어요.</p>
+            <button id="reinstall" class="btn g s">설정 다시 받기</button>
+          </div>
+
+          <div class="cards">
+            <section class="card"><h2>로그인</h2><p>설치가 끝나면 본인 <b>Claude 계정</b>으로 로그인하세요. 로그인은 앱 폴더에 저장돼서 앱을 껐다 켜도 유지되고, 여는 Claude Code 창은 모두 자동으로 로그인돼요. 이전 대화가 있으면 <b>이어서</b>를 골라 계속할 수 있어요. 유료 플랜 등 사용 조건은 공식 문서에서 확인해 주세요.</p><p>PC에 Claude Code가 이미 있으면 그 프로그램을 써요. 단, 로그인과 설정은 원래 쓰던 <b>~/.claude와 따로</b> 이 앱 폴더에 저장돼서 서로 영향을 주지 않아요.</p></section>
+            <section class="card"><h2>설정 저장소 (GitHub)</h2><p>환경 설정 저장소가 비공개면 받을 때 <b>GitHub 로그인 창</b>이 한 번 뜰 수 있어요. 저장소에 접근 권한이 있는 계정으로 로그인하세요.</p><p>이 로그인 정보는 Git이 Windows 자격 증명 관리자에 저장해요. 공용 PC라면 사용 후 자격 증명 관리자에서 github.com 항목을 지워 주세요.</p></section>
+            <section class="card"><h2>/report 명령</h2><p>환경 설정에 <b>/report</b> 명령이 들어 있어요. 실행하면 작업한 문제와 진행 상황의 요약, 오늘의 <b>Git 커밋 기록, Claude에게 한 질문 전체, 만들거나 삭제한 파일·폴더 목록</b>이 <b>서버로 전송</b>되고 팀원이 볼 수 있어요.</p><p>코드 원문과 키는 보내지 않고, 전송 전에 내용을 먼저 보여주고 확인을 받아요. 실행하지 않으면 아무것도 전송되지 않아요.</p></section>
+            <section class="card"><h2>저장 위치와 삭제</h2><p>이 앱은 설치만 하고, 앱을 닫아도 아무것도 지우지 않아요. 설정, 로그인, 대화 기록은 <code>%LOCALAPPDATA%/ClaudeContest/data</code>에 남아요. 지우려면 앱을 닫고 그 폴더를 직접 삭제하세요.</p></section>
+          </div>
+
+          <div class="card logcard">
+            <h2>로그 <span class="mu">(최근 기록)</span></h2>
+            <pre id="log"></pre>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- 설정 적용 전 확인 창 -->
+    <div id="modal" class="overlay" hidden>
+      <div class="dialog wide">
         <h2>이 설정을 적용할까요?</h2>
-        <p id="modalRepo" class="muted"></p>
+        <p id="modalRepo" class="mu"></p>
         <p id="modalWarn" class="warn" hidden></p>
         <div class="cols">
           <div>
             <h3>적용될 파일</h3>
             <ul id="modalFiles"></ul>
-            <p id="modalIgnored" class="muted"></p>
+            <p id="modalIgnored" class="mu"></p>
           </div>
           <div>
             <h3>CLAUDE.md 미리보기</h3>
             <pre id="modalPreview"></pre>
           </div>
         </div>
-        <div class="actions">
-          <button id="ok">적용</button>
-          <button id="skip" class="ghost">설치 취소</button>
+        <div class="row end">
+          <button id="skip" class="btn g">설치 취소</button>
+          <button id="ok" class="btn">적용</button>
         </div>
       </div>
     </div>
+
+    <!-- 확인 창(앱 안에서 띄우는 confirm) -->
+    <div id="ask" class="overlay" hidden>
+      <div class="dialog">
+        <p id="askMsg"></p>
+        <div class="row end">
+          <button id="askNo" class="btn g">취소</button>
+          <button id="askYes" class="btn">확인</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" role="status" hidden></div>
 
     <script src="renderer.js"></script>
   </body>
