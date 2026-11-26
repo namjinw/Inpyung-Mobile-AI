@@ -294,7 +294,10 @@ async function runInstall() {
   resetSteps()
   setPhase('installing')
   const r = await window.api.install()
-  if (!r.ok) setPhase('failed')
+  if (!r.ok) return setPhase('failed')
+  info = await window.api.info() // 방금 받은 설정 태그를 다시 읽는다.
+  showVersion()
+  renderHome()
 }
 $('install').addEventListener('click', runInstall)
 async function reinstall() {
@@ -351,11 +354,15 @@ const reply = (ok) => {
 $('ok').addEventListener('click', () => reply(true))
 $('skip').addEventListener('click', () => reply(false))
 
+function showVersion() {
+  $('ver').textContent = `앱 v${info.version}${info.tag ? ` · 설정 ${info.tag}` : ''}`
+  $('setRepo').textContent = info.placeholder ? '설정 저장소가 아직 정해지지 않았어요. (app/config.json에서 설정)' : `${info.repo} (${info.tag})`
+}
+
 // ── 시작
 ;(async () => {
   info = await window.api.info()
-  $('ver').textContent = `앱 v${info.version}${info.tag ? ` · 설정 ${info.tag}` : ''}`
-  $('setRepo').textContent = info.placeholder ? '설정 저장소가 아직 정해지지 않았어요. (app/config.json에서 설정)' : `${info.repo} (${info.tag})`
+  showVersion()
   setPhase(info.ready ? (info.loggedIn ? 'ready' : 'login') : 'idle')
   showPage('home')
   await loadFolders()

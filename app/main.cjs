@@ -74,6 +74,7 @@ async function runInstall() {
 
     step(4, '클로드 환경 설정 가져오기', 'running')
     let applied = 0
+    let appliedTag = ''
     if (settings.isPlaceholder(cfg)) {
       step(4, '클로드 환경 설정 가져오기', 'skipped', 100, '설정 저장소가 아직 정해지지 않아서 건너뛰었어요. (app/config.json에서 설정)')
     } else {
@@ -87,10 +88,11 @@ async function runInstall() {
       }
       const r = await settings.apply(cfg, (pct, msg) => step(4, '클로드 환경 설정 가져오기', 'running', pct, msg))
       applied = r.applied
+      appliedTag = plan.tag
       step(4, '클로드 환경 설정 가져오기', 'done', 100, `${applied}개 항목을 적용했어요.`)
     }
 
-    session.writeState({ ready: true, claudeVersion: cl.version, claudePath: paths.dirs.claudeExe, bashPath: g.bashPath })
+    session.writeState({ ready: true, settingsTag: appliedTag, claudeVersion: cl.version, claudePath: paths.dirs.claudeExe, bashPath: g.bashPath })
     const loggedIn = await session.isLoggedIn(g.bashPath)
     send('state', { phase: loggedIn ? 'ready' : 'login' })
     log(loggedIn ? '설치가 끝났어요. [실행] 버튼을 눌러 Claude Code를 시작하세요.' : '설치가 끝났어요. [로그인]을 눌러 Claude 계정으로 로그인해 주세요.')
@@ -122,7 +124,7 @@ const folderInfo = (f) => {
   return { path: f, name: path.basename(f) || f, isDefault: f === paths.dirs.work, chats: chats.length, last: chats[0] || 0, exists: fs.existsSync(f) }
 }
 
-ipcMain.handle('info', async () => ({ version: app.getVersion(), problemDir: session.getProblemDir(), ready: session.isReady(), loggedIn: session.isReady() && (await session.isLoggedIn(session.readState().bashPath)), placeholder: settings.isPlaceholder(cfg), repo: cfg.settingsRepo, tag: cfg.settingsTag, work: paths.dirs.work }))
+ipcMain.handle('info', async () => ({ version: app.getVersion(), problemDir: session.getProblemDir(), ready: session.isReady(), loggedIn: session.isReady() && (await session.isLoggedIn(session.readState().bashPath)), placeholder: settings.isPlaceholder(cfg), repo: cfg.settingsRepo, tag: session.readState().settingsTag || cfg.settingsTag, work: paths.dirs.work }))
 ipcMain.handle('check', () => check.run(cfg))
 ipcMain.handle('folders', () => session.listFolders().map(folderInfo))
 ipcMain.handle('chats', (e, f) => (trusted(e) && session.listFolders().includes(f) ? session.listChats(f) : []))
