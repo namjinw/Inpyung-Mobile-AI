@@ -9,7 +9,7 @@
 | 저장소 | 역할 |
 |---|---|
 | **이 저장소 (앱)** | Claude Code 설치, 팀 설정 적용, 로그인, 실행 |
-| [Inpyung-Mobile-AI-Setting](https://github.com/namjinw/Inpyung-Mobile-AI-Setting) | 팀 공용 Claude Code 설정 (`CLAUDE.md`, `settings.json`, `/report` 명령어) |
+| [Inpyung-Mobile-AI-Setting](https://github.com/namjinw/Inpyung-Mobile-AI-Setting) | 팀 공용 Claude Code 설정 (`CLAUDE.md`, `settings.json`, `/report`·`/grading`·`/ask` 명령어) |
 | [WordSkilll_PLUSE](https://github.com/namjinw/WordSkilll_PLUSE) | `/report` 보고를 받는 서버 (GitHub 로그인, 달력) |
 
 ## 하는 일
@@ -22,6 +22,17 @@
 4. **클로드 환경 설정 가져오기**: 설정 저장소(`config.json`의 `settingsRepo`, `settingsTag`)에서 설정을 받아 적용할 파일 목록을 보여 주고, [적용]을 눌러야 설치가 끝나요. 제한과 `/report`가 빠진 채로 실행되지 않도록 건너뛰기는 없고, [설치 취소]를 누르면 설치가 중단돼요.
 
 끝나면 버튼이 **[로그인]**으로 바뀌어요. 누르면 로그인 창과 브라우저가 열리고, 본인 Claude 계정으로 로그인하면 버튼이 **[실행]**으로 바뀌어요. 로그인은 이 앱이 아니라 claude가 앱 폴더(`data`)에 저장해서, **앱을 껐다 켜도 유지**되고 그 뒤에 여는 모든 Claude Code 창에서 자동으로 쓰여요. [실행]은 여러 번 눌러 **여러 개를 동시에** 열 수 있어요(버튼이 [새 Claude Code 창 열기]로 바뀌어요). 이전에 나눈 대화가 있으면 [실행]할 때 `--continue`로 **이어서 시작**해요(이미 열린 창이 있으면 새 대화예요). 처음 켤 때 테마는 **dark**, 기본 모델은 설정 저장소의 `settings.json`(`claude-sonnet-5-5`)을 따라요. 팀 설정이 바뀌었으면 **[설정 다시 받기]**를 눌러요. 사이드바 메뉴는 설치 / 안내 / 로그예요.
+
+## 팀 설정의 명령어
+
+| 명령어 | 하는 일 |
+|---|---|
+| `/report start`, `/report end` | 오늘 목표와 작업을 보고 서버에 보내요 |
+| `/report-status` | 보고 서버 주소와 켜짐 여부를 알려 줘요 |
+| `/grading` | 과제지와 채점표대로 에뮬레이터에서 제출물을 자동 채점해요 |
+| `/ask 이름` | 라이브러리 설명과 예제를 알려 줘요 |
+
+앱은 [설치]나 [설정 다시 받기] 때 설정을 받아요. `/grading`이 adb·emulator·ffmpeg를 이름으로 찾을 수 있게, 앱에서 여는 Claude Code 창에는 PC의 Android SDK와 ffmpeg 폴더를 PATH에 붙여요. 자세한 설명은 [설정 저장소](https://github.com/namjinw/Inpyung-Mobile-AI-Setting)에 있어요.
 
 ## 저장 위치 (지우지 않아요)
 
@@ -60,6 +71,14 @@ npm run app
 | `SETTINGS_TAG` | 받을 태그. `latest`면 저장소의 가장 높은 `vX.Y.Z` 태그를 자동으로 받아요. |
 
 ## exe 만들기
+
+**설치 파일**(릴리스에 올리는 것): `release-setup/WordSkill-Setup.exe`가 만들어져요.
+
+```bash
+npm run dist
+```
+
+설치 없이 실행하는 폴더 버전:
 
 ```bash
 npm run pack
